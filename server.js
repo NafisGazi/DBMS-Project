@@ -17,7 +17,7 @@ app.use(express.json());  // Enables Express to read JSON data from incoming req
 
 // 4. SETUP DATABASE CONNECTION POOL
 const pool = mysql.createPool({
-    host: process.env.DB_HOST || 'localhost',
+    host: process.env.DB_HOST || 'sql202.infinityfree.com',
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
     database: process.env.DB_NAME || 'restaurant_management_system',
