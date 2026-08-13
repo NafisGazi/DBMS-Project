@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teddy Town Management System</title>
+    <style>
+        :root {
+            --primary: #885133;
+            --accent: #e74c3c;
+            --bg-light: #f0e6d7;
+            --text-dark: #885133;
+            --border-color: #885133;
+            --success: #0ee266;
+            --warning: #f1c40f;
+            --info: #885133;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            display: flex;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar styling */
+        .sidebar {
+            width: 260px;
+            background-color: var(--primary);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+        }
+
+        .sidebar h2 {
+            padding: 0 20px 20px 20px;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-btn {
+            background: none;
+            border: none;
+            color: #bdc3c7;
+            padding: 15px 20px;
+            text-align: left;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .sidebar-btn:hover, .sidebar-btn.active {
+            background-color: rgba(255,255,255,0.1);
+            color: white;
+            border-left: 4px solid var(--accent);
+            padding-left: 16px;
+        }
+
+        /* Main Content Container */
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            color: var(--primary);
+        }
+
+        /* Table Styling */
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f1f2f6;
+            color: var(--primary);
+            padding: 15px;
+            font-weight: 600;
+            border-bottom: 2px solid var(--border-color);
+            text-transform: capitalize;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.95rem;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover {
+            background-color: #fdfdfd;
+        }
+
+        /* Utility Badges */
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .badge-success { background-color: #e8f8f5; color: var(--success); }
+        .badge-danger { background-color: #fde8e8; color: var(--accent); }
+        .badge-warning { background-color: #fef9e7; color: #d4ac0d; }
+
+        .actions-cell button {
+            background: none;
+            border: none;
+            color: #7f8c8d;
+            cursor: pointer;
+            margin-right: 10px;
+            font-size: 0.9rem;
+        }
+
+        .actions-cell button:hover {
+            color: var(--accent);
+        }
+
+        .loading {
+            padding: 20px;
+            text-align: center;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h2>🧸 Teddy Town</h2>
+        <button class="sidebar-btn active" onclick="switchTable('menu-items', this)">😋 Menu Items</button>
+        <button class="sidebar-btn" onclick="switchTable('orders', this)">📋 Orders</button>
+        <button class="sidebar-btn" onclick="switchTable('order-items', this)">🍽️ Order Items</button>
+        <button class="sidebar-btn" onclick="switchTable('tables', this)">🪑 Tables</button>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <h1 id="table-title">Menu Items</h1>
+        </div>
+
+        <div class="table-container">
+            <table id="data-table">
+                <thead>
+                    <tr id="table-headers">
+                        </tr>
+                </thead>
+                <tbody id="table-body">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:5000/api';
+        let currentView = 'menu-items';
+
+        // Dictionary to map food/tables items to interactive UI emojis dynamically
+        const emojis = {
+            "Kacchi Biryani": "🍛 ", "Chicken Fry (2pc)": "🍗 ", "Beef Sheek Kebab": "🍢 ",
+            "Mutton Rezala": "🥩 ", "Fuchka": "🥙 ", "Chicken Fried Rice": "🍚 ",
+            "Borhani": "🥛 ", "7 Color Tea": "☕ ", "Falooda": "🍧 ", "Rasmalai": "🍨 ",
+            "Table 1": "🪑 ", "Table 2": "🪑 ", "Table 3": "🪑 ", "Table 4": "🪑 ",
+            "Booth 11": "🛋️ ", "Booth 12": "🛋️ ", "Bar 1": "🥂 ", "Bar 2": "🥂 "
+        };
+
+        // Fetch data asynchronously from our Node.js Backend API
+        async function loadTableData(endpoint) {
+            const tableBody = document.getElementById('table-body');
+            const headerRow = document.getElementById('table-headers');
+            
+            tableBody.innerHTML = '<tr><td colspan="10" class="loading">Fetching records from live SQL server...</td></tr>';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/${endpoint}`);
+                const data = await response.json();
+
+                if (data.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="10" class="loading">No records found inside this table.</td></tr>';
+                    return;
+                }
+
+                // 1. Generate Headers automatically based on the SQL column keys returned
+                headerRow.innerHTML = '<th>Actions</th>';
+                const columns = Object.keys(data[0]);
+                columns.forEach(col => {
+                    const th = document.createElement('th');
+                    th.innerText = col.replace('_', ' ');
+                    headerRow.appendChild(th);
+                });
+
+                // 2. Generate Rows and map properties dynamically
+                tableBody.innerHTML = '';
+                data.forEach(row => {
+                    const tr = document.createElement('tr');
+                    
+                    // Add static actions column
+                    const actionTd = document.createElement('td');
+                    actionTd.className = 'actions-cell';
+                    actionTd.innerHTML = `<button onclick="alert('Edit operation')">📝 Edit</button>`;
+                    tr.appendChild(actionTd);
+
+                    // Map fields and enrich statuses with CSS component badges
+                    columns.forEach(col => {
+                        const td = document.createElement('td');
+                        let value = row[col];
+
+                        // Inject emojis if matched name string exists
+                        if (emojis[value]) {
+                            value = emojis[value] + value;
+                        }
+
+                        // Status component badge transformation engine
+                        if (col === 'is_available') {
+                            td.innerHTML = value === 1 ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-danger">No</span>';
+                        } else if (value === 'Paid' || value === 'Available' || value === 'Served') {
+                            td.innerHTML = `<span class="badge badge-success">${value}</span>`;
+                        } else if (value === 'Pending' || value === 'In-Progress') {
+                            td.innerHTML = `<span class="badge badge-warning">${value}</span>`;
+                        } else if (value === 'Dirty' || value === 'Occupied') {
+                            td.innerHTML = `<span class="badge badge-danger">${value}</span>`;
+                        } else if (value === null) {
+                            td.innerHTML = `<em style="color:#aaa">NULL</em>`;
+                        } else if (col === 'created_at') {
+                            // Format SQL timestamps cleanly
+                            td.innerText = new Date(value).toISOString().slice(0, 19).replace('T', ' ');
+                        } else {
+                            td.innerText = value;
+                        }
+                        tr.appendChild(td);
+                    });
+
+                    tableBody.appendChild(tr);
+                });
+
+            } catch (error) {
+                tableBody.innerHTML = `<tr><td colspan="10" class="loading" style="color:var(--accent)">❌ Failed to communicate with Backend API: ${error.message}</td></tr>`;
+            }
+        }
+
+        // Switch active visual tabs
+        function switchTable(endpoint, buttonElement) {
+            document.querySelectorAll('.sidebar-btn').forEach(btn => btn.classList.remove('active'));
+            buttonElement.classList.add('active');
+            
+            currentView = endpoint;
+            document.getElementById('table-title').innerText = endpoint.replace('-', ' ').toUpperCase();
+            loadTableData(endpoint);
+        }
+
+        // Auto initialization load
+        window.onload = function() {
+            loadTableData('menu-items');
+        };
+    </script>
+</body>
+</html>
