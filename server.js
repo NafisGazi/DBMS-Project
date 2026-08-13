@@ -148,5 +148,5 @@ app.put('/api/tables/:id/status', async (req, res) => {
 // =========================================================================
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`🚀 API active and serving database records at: http://localhost:${PORT}`);
+    console.log(`🚀 API active and serving database records at: http://sql202.infinityfree.com:${PORT}`);
 });
